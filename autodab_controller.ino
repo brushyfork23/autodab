@@ -79,13 +79,13 @@ void setup() {
   Serial.print("Heattime (adr ");
   Serial.print(HEATTIME_MEM_ADR);
   Serial.print("): ");
-  Serial.println(value));
+  Serial.println(value);
   heattime = value ? value : HEATTIME_DEFAULT;
   value = EEPROM.read(COOLTIME_MEM_ADR);
   Serial.print("Cooltime (adr ");
   Serial.print(COOLTIME_MEM_ADR);
   Serial.print("): ");
-  Serial.println(value));
+  Serial.println(value);
   cooltime = value ? value : COOLTIME_DEFAULT;
 
   // Setup LEDs
