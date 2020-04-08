@@ -69,11 +69,23 @@ bool isTransitioning = true;
 void setup() {
   delay(1000UL); // Give everything a second to power up
 
+  // Setup Serial Monitor
+  Serial.begin(9600);
+
   // Load saved values from EEPROM
   //EEPROM.begin(2);
+  Serial.println("Reading stored values from EEPROM");
   uint8_t value = EEPROM.read(HEATTIME_MEM_ADR);
+  Serial.print("Heattime (adr ");
+  Serial.print(HEATTIME_MEM_ADR);
+  Serial.print("): ");
+  Serial.println(value));
   heattime = value ? value : HEATTIME_DEFAULT;
   value = EEPROM.read(COOLTIME_MEM_ADR);
+  Serial.print("Cooltime (adr ");
+  Serial.print(COOLTIME_MEM_ADR);
+  Serial.print("): ");
+  Serial.println(value));
   cooltime = value ? value : COOLTIME_DEFAULT;
 
   // Setup LEDs
@@ -90,9 +102,6 @@ void setup() {
   modeBtn.interval(50); // Use a debounce interval of 50 milliseconds
   goBtn.attach(GO_BTN_PIN, INPUT_PULLUP);
   goBtn.interval(50); // Use a debounce interval of 50 milliseconds
-
-  // Setup Serial Monitor
-  Serial.begin(9600);
 }
 
 void loop() {
