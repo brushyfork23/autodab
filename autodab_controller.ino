@@ -165,6 +165,7 @@ void tickIdle() {
 
   // When mode button is pressed, change state to SET_HEAT_TIME_STATE
   if (modeBtn.fell()) {
+    Serial.println("MODE button pressed");
     state = SET_HEAT_TIME_STATE;
     isTransitioning = true;
     return;
@@ -172,6 +173,7 @@ void tickIdle() {
 
   // When go button is pressed, change state to HEATING_STATE
   if (goBtn.fell()) {
+    Serial.println("GO button pressed");
     state = HEATING_STATE;
     isTransitioning = true;
     return;
@@ -194,6 +196,7 @@ void tickSetHeatTime() {
 
   // When mode button is pressed, store value and change state to SET_COOL_TIME_STATE
   if (modeBtn.fell()) {
+    Serial.println("MODE button pressed");
     // Store heattime in memory
     EEPROM.write(HEATTIME_MEM_ADR, heattime);
     //EEPROM.commit();
@@ -242,6 +245,7 @@ void tickSetCoolTime() {
 
   // When mode button is pressed, store value and change state to IDLE_STATE
   if (modeBtn.fell()) {
+    Serial.println("MODE button pressed");
     // Store cooltime in memory
     EEPROM.write(COOLTIME_MEM_ADR, cooltime);
     //EEPROM.commit();
@@ -291,6 +295,7 @@ void tickHeating() {
 
   // If go button is pressed, cancel heating by changing state to IDLE_STATE
   if (goBtn.fell()) {
+    Serial.println("GO button pressed");
     if (SOLENOID_ENABLED) {
       digitalWrite(SOLENOID_PIN, LOW);
     }
@@ -328,6 +333,7 @@ void tickCooling() {
 
   // If go button is pressed, abort early by changing state to IDLE_STATE
   if (goBtn.fell()) {
+    Serial.println("GO button pressed");
     state = IDLE_STATE;
     isTransitioning = true;
     return;
@@ -361,6 +367,7 @@ void tickGood() {
 
   // If go button is pressed, abort early by changing state to IDLE_STATE
   if (goBtn.fell()) {
+    Serial.println("GO button pressed");
     state = IDLE_STATE;
     isTransitioning = true;
     return;
