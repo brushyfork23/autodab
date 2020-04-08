@@ -66,15 +66,11 @@ enum states {
 enum states state = IDLE_STATE;
 bool isTransitioning = true;
 
-class Animatior {
-  
-}
-
 void setup() {
   delay(1000UL); // Give everything a second to power up
 
   // Load saved values from EEPROM
-  EEPROM.begin(2); // store 2 bytes total
+  //EEPROM.begin(2);
   uint8_t value = EEPROM.read(HEATTIME_MEM_ADR);
   heattime = value ? value : HEATTIME_DEFAULT;
   value = EEPROM.read(COOLTIME_MEM_ADR);
@@ -191,7 +187,7 @@ void tickSetHeatTime() {
   if (modeBtn.fell()) {
     // Store heattime in memory
     EEPROM.write(HEATTIME_MEM_ADR, heattime);
-    EEPROM.commit();
+    //EEPROM.commit();
     // Change state
     state = SET_COOL_TIME_STATE;
     isTransitioning = true;
@@ -239,7 +235,7 @@ void tickSetCoolTime() {
   if (modeBtn.fell()) {
     // Store cooltime in memory
     EEPROM.write(COOLTIME_MEM_ADR, cooltime);
-    EEPROM.commit();
+    //EEPROM.commit();
     // Change state
     state = IDLE_STATE;
     isTransitioning = true;
