@@ -114,30 +114,30 @@ void loop() {
     encoder.update();
   }
 
+  switch (state) {
+    case IDLE_STATE:
+      tickIdle();
+      break;
+    case SET_HEAT_TIME_STATE:
+      tickSetHeatTime();
+      break;
+    case SET_COOL_TIME_STATE:
+      tickSetCoolTime();
+      break;
+    case HEATING_STATE:
+      tickHeating();
+      break;
+    case COOLING_STATE:
+      tickCooling();
+      break;
+    case GOOD_STATE:
+      tickGood();
+      break;
+  }
+
   // Update the LEDs
   static Chrono ledsTimer;
   if (ledsTimer.hasPassed(1000UL / LED_FPS)) {
-    switch (state) {
-      case IDLE_STATE:
-        tickIdle();
-        break;
-      case SET_HEAT_TIME_STATE:
-        tickSetHeatTime();
-        break;
-      case SET_COOL_TIME_STATE:
-        tickSetCoolTime();
-        break;
-      case HEATING_STATE:
-        tickHeating();
-        break;
-      case COOLING_STATE:
-        tickCooling();
-        break;
-      case GOOD_STATE:
-        tickGood();
-        break;
-    }
-
     ledsTimer.restart();
     FastLED.show();
   }
