@@ -58,6 +58,12 @@ uint8_t goodtime = GOODTIME_DEFAULT;  // Nail good-to-hit time in seconds.
 #define COOLTIME_MEM_ADR 1 // Address in EEPROM for storing cooltime
 #define GOODTIME_MEM_ADR 2 // Address in EEPROM for storing goodtime
 
+// Buzzer config
+#define BUZZER_PIN 10
+#define BUZZER_TONE 1000 // 1KHz sound signal
+#define BUZZER_TIME 250  // Time to play sound in milliseconds
+Chrono buzzerTimer;
+
 // State variables
 enum states {
   IDLE_STATE,           // Everything is off.  Awaiting instructions.
@@ -66,7 +72,7 @@ enum states {
   SET_GOOD_TIME_STATE,  // Adjust the good-to-hit time with knob, with green LEDs as indicator.
   HEATING_STATE,        // Solenoid is engaged.  Nail is heating up.  Red LEDs count up.
   COOLING_STATE,        // Solenoid is disengaged.  Nail is cooling down.  LEDs count down, fading from red to green.
-  GOOD_STATE            // Nail is at perfect temperature.  Green LEDs dim.
+  GOOD_STATE            // Nail is at perfect temperature.  Buzzer buzzes briefly. Green LEDs dim.
 };
 enum states state = IDLE_STATE;
 bool isTransitioning = true;
@@ -106,6 +112,9 @@ void setup() {
   if (SOLENOID_ENABLED) {
     pinMode(SOLENOID_PIN, OUTPUT);
   }
+
+  // Setup Buzzer
+  pinmode(BUZZER_PIN, OUTPUT);
 
   // Setup Buttons
   modeBtn.attach(MODE_BTN_PIN, INPUT_PULLUP);
@@ -412,7 +421,7 @@ void tickCooling() {
 
 
 // state: GOOD_STATE
-// Nail is at perfect temperature.  Green LEDs dim.
+// Nail is at perfect temperature.  Buzzer buzzes briefly. Green LEDs dim.
 void tickGood() {
   if (isTransitioning) {
     isTransitioning = false;
@@ -420,16 +429,26 @@ void tickGood() {
     Serial.println("IT'S ALL GOOD");
     // Start goodtime Timer
     goodTimer.restart();
+    // Start buzzer Timer
+    buzzerTimer.restart();
+    tone(BUZZER_PIN, BUZZER_TONE);
   }
 
   // If go button is pressed, abort early by changing state to IDLE_STATE
+  // and stop the buzzer if it is still playing
   if (goBtn.fell()) {
     Serial.println("GO button pressed");
     state = IDLE_STATE;
     isTransitioning = true;
+    noTone(BUZZER_PIN);
     return;
   }
   
+  // When the buzzer timer has elapsed, stop playing the sound
+  if (buzzerTimer.hasPassed(BUZZER_TIME)) {
+    noTone(BUZZER_PIN);
+  }
+
   // When the goodtime timer has elapsed, change state to IDLE_STATE
   if (goodTimer.hasPassed(goodtime * 1000UL)) {
     state = IDLE_STATE;
