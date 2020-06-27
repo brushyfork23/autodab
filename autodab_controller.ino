@@ -39,26 +39,31 @@ Bounce goBtn = Bounce();
 Chrono heatingTimer;
 Chrono coolingTimer;
 Chrono goodTimer;
+#define HEATTIME_DEFAULT 30 // Default heating time in seconds
 #define HEATTIME_MIN 10     // Minimum heating time in seconds
 #define HEATTIME_MAX 70     // Maximum heating time in seconds
-#define HEATTIME_DEFAULT 30 // Default heating time in seconds
 #define COOLTIME_DEFAULT 30 // Default cooling time in seconds
 #define COOLTIME_MIN 1      // Minimum cooling time in seconds
 #define COOLTIME_MAX 61     // Maximum cooling time in seconds
-#define GOODTIME 10         // Length of time the nail is good to hit in seconds
+#define GOODTIME_DEFAULT 10 // Default good-to-hit time in seconds
+#define GOODTIME_MIN 2      // Minimum good-to-hit time in seconds
+#define GOODTIME_MAX 60     // Maximum good-to-hit time in seconds
 uint8_t heattime = HEATTIME_DEFAULT;  // Torch on time in seconds.
 uint8_t cooltime = COOLTIME_DEFAULT;  // Nail cooling time in seconds.
+uint8_t goodtime = GOODTIME_DEFAULT;  // Nail good-to-hit time in seconds.
 
 // Memory Config
 #include <EEPROM.h>
 #define HEATTIME_MEM_ADR 0 // Address in EEPROM for storing heattime
 #define COOLTIME_MEM_ADR 1 // Address in EEPROM for storing cooltime
+#define GOODTIME_MEM_ADR 2 // Address in EEPROM for storing goodtime
 
 // State variables
 enum states {
   IDLE_STATE,           // Everything is off.  Awaiting instructions.
   SET_HEAT_TIME_STATE,  // Adjust the heating time with the knob, with red LEDs as indicator.
   SET_COOL_TIME_STATE,  // Adjust the cooling time with knob, with yellow LEDs as indicator.
+  SET_GOOD_TIME_STATE,  // Adjust the good-to-hit time with knob, with green LEDs as indicator.
   HEATING_STATE,        // Solenoid is engaged.  Nail is heating up.  Red LEDs count up.
   COOLING_STATE,        // Solenoid is disengaged.  Nail is cooling down.  LEDs count down, fading from red to green.
   GOOD_STATE            // Nail is at perfect temperature.  Green LEDs dim.
@@ -73,7 +78,6 @@ void setup() {
   Serial.begin(9600);
 
   // Load saved values from EEPROM
-  //EEPROM.begin(2);
   Serial.println("Reading stored values from EEPROM");
   uint8_t value = EEPROM.read(HEATTIME_MEM_ADR);
   Serial.print("Heattime (adr ");
@@ -87,6 +91,12 @@ void setup() {
   Serial.print("): ");
   Serial.println(value);
   cooltime = value ? value : COOLTIME_DEFAULT;
+  value = EEPROM.read(GOODTIME_MEM_ADR);
+  Serial.print("goodtime (adr ");
+  Serial.print(GOODTIME_MEM_ADR);
+  Serial.print("): ");
+  Serial.println(value);
+  goodtime = value ? value : GOODTIME_MEM_ADR;
 
   // Setup LEDs
   FastLED.addLeds<CHIPSET, LED_PIN, COLOR_ORDER>(leds, NUM_LEDS).setCorrection( TypicalLEDStrip );
@@ -123,6 +133,9 @@ void loop() {
       break;
     case SET_COOL_TIME_STATE:
       tickSetCoolTime();
+      break;
+    case SET_GOOD_TIME_STATE:
+      tickSetGoodTime();
       break;
     case HEATING_STATE:
       tickHeating();
@@ -199,7 +212,6 @@ void tickSetHeatTime() {
     Serial.println("MODE button pressed");
     // Store heattime in memory
     EEPROM.write(HEATTIME_MEM_ADR, heattime);
-    //EEPROM.commit();
     // Change state
     state = SET_COOL_TIME_STATE;
     isTransitioning = true;
@@ -232,7 +244,6 @@ void tickSetHeatTime() {
 // state: SET_COOL_TIME_STATE
 // Adjust the cooling time with knob, with yellow LEDs as indicator.
 void tickSetCoolTime() {
-  // and reset the encoder
   if (isTransitioning) {
     isTransitioning = false;
     // Log the state transition
@@ -248,14 +259,13 @@ void tickSetCoolTime() {
     Serial.println("MODE button pressed");
     // Store cooltime in memory
     EEPROM.write(COOLTIME_MEM_ADR, cooltime);
-    //EEPROM.commit();
     // Change state
     state = IDLE_STATE;
     isTransitioning = true;
     return;
   }
 
-  // If rotary encoder is moved, adjust the amount of time for heating.
+  // If rotary encoder is moved, adjust the amount of time for cooling.
   int16_t encoderChange = encoder.getChange();
   if (encoderChange != 0) {
     // guard against integer overflow
@@ -275,6 +285,53 @@ void tickSetCoolTime() {
 
   // Draw yellow LEDs to indicate how long cooling will be.
   lightProgressive(HUE_YELLOW, cooltime, COOLTIME_MIN, COOLTIME_MAX);
+}
+
+
+// state: SET_GOOD_TIME_STATE
+// Adjust the good-to-hit time with knob, with green LEDs as indicator.
+void tickSetGoodTime() {
+  if (isTransitioning) {
+    isTransitioning = false;
+    // Log the state transition
+    Serial.println("ADJUST GOOD TIME");
+    Serial.println("| GOOD TIME :");
+    Serial.println(goodtime);
+    // Reset the encoder
+    encoder.reset();
+  }
+
+  // When mode button is pressed, store value and change state to IDLE_STATE
+  if (modeBtn.fell()) {
+    Serial.println("MODE button pressed");
+    // Store goodtime in memory
+    EEPROM.write(GOODTIME_MEM_ADR, goodtime);
+    // Change state
+    state = IDLE_STATE;
+    isTransitioning = true;
+    return;
+  }
+
+  // If rotary encoder is moved, adjust the good-to-hit time.
+  int16_t encoderChange = encoder.getChange();
+  if (encoderChange != 0) {
+    // guard against integer overflow
+    if (encoderChange < 0 && abs(encoderChange) > goodtime) {
+      goodtime = GOODTIME_MIN;
+    } else if (encoderChange > GOODTIME_MAX - goodtime) {
+      goodtime = GOODTIME_MAX;
+    } else {
+      goodtime = goodtime + encoderChange;
+    }
+    goodtime = constrain(goodtime, GOODTIME_MIN, GOODTIME_MAX);
+
+    Serial.print("Good Time ");
+    Serial.print(goodtime);
+    Serial.println(" seconds");
+  }
+
+  // Draw green LEDs to indicate how long good-to-hit time will be.
+  lightProgressive(HUE_GREEN, goodtime, GOODTIME_MIN, GOODTIME_MAX);
 }
 
 
@@ -374,14 +431,14 @@ void tickGood() {
   }
   
   // When the goodtime timer has elapsed, change state to IDLE_STATE
-  if (goodTimer.hasPassed(GOODTIME * 1000UL)) {
+  if (goodTimer.hasPassed(goodtime * 1000UL)) {
     state = IDLE_STATE;
     isTransitioning = true;
     return;
   }
 
   // Fade all LEDs from green to black
-  uint8_t brightness = 255 - (255 * goodTimer.elapsed() / (GOODTIME * 1000UL));
+  uint8_t brightness = 255 - (255 * goodTimer.elapsed() / (goodtime * 1000UL));
   for (uint8_t i=0; i<NUM_LEDS; i++) {
     leds[i] = CHSV(HUE_GREEN, 255, brightness);
   }
