@@ -114,7 +114,7 @@ void setup() {
   }
 
   // Setup Buzzer
-  pinmode(BUZZER_PIN, OUTPUT);
+  pinMode(BUZZER_PIN, OUTPUT);
 
   // Setup Buttons
   modeBtn.attach(MODE_BTN_PIN, INPUT_PULLUP);
