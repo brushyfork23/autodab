@@ -44,9 +44,9 @@ Chrono goodTimer;
 #define HEATTIME_MAX 70     // Maximum heating time in seconds
 #define COOLTIME_DEFAULT 30 // Default cooling time in seconds
 #define COOLTIME_MIN 1      // Minimum cooling time in seconds
-#define COOLTIME_MAX 61     // Maximum cooling time in seconds
+#define COOLTIME_MAX 60     // Maximum cooling time in seconds
 #define GOODTIME_DEFAULT 10 // Default good-to-hit time in seconds
-#define GOODTIME_MIN 2      // Minimum good-to-hit time in seconds
+#define GOODTIME_MIN 1      // Minimum good-to-hit time in seconds
 #define GOODTIME_MAX 60     // Maximum good-to-hit time in seconds
 uint8_t heattime = HEATTIME_DEFAULT;  // Torch on time in seconds.
 uint8_t cooltime = COOLTIME_DEFAULT;  // Nail cooling time in seconds.
