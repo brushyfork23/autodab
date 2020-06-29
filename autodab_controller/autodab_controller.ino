@@ -60,8 +60,6 @@ uint8_t goodtime = GOODTIME_DEFAULT;  // Nail good-to-hit time in seconds.
 
 // Buzzer config
 #define BUZZER_PIN 10
-#define BUZZER_TONE 1000 // 1KHz sound signal
-#define BUZZER_TIME 250  // Time to play sound in milliseconds
 Chrono buzzerTimer;
 
 // State variables
@@ -429,9 +427,8 @@ void tickGood() {
     Serial.println("IT'S ALL GOOD");
     // Start goodtime Timer
     goodTimer.restart();
-    // Start buzzer Timer
-    buzzerTimer.restart();
-    tone(BUZZER_PIN, BUZZER_TONE);
+    // Rewind to the beginning of the jingle
+    resetJingle();
   }
 
   // If go button is pressed, abort early by changing state to IDLE_STATE
@@ -440,14 +437,12 @@ void tickGood() {
     Serial.println("GO button pressed");
     state = IDLE_STATE;
     isTransitioning = true;
-    noTone(BUZZER_PIN);
+    resetJingle();
     return;
   }
-  
-  // When the buzzer timer has elapsed, stop playing the sound
-  if (buzzerTimer.hasPassed(BUZZER_TIME)) {
-    noTone(BUZZER_PIN);
-  }
+
+  // Play a jaunty jingle
+  playJingle();
 
   // When the goodtime timer has elapsed, change state to IDLE_STATE
   if (goodTimer.hasPassed(goodtime * 1000UL)) {
@@ -463,6 +458,50 @@ void tickGood() {
   }
 }
 
+
+///////////////////////////////////////
+// Buzzer Jingle utility methods
+///////////////////////////////////////
+
+#define FIRST_TONE_PITCH    1250
+#define FIRST_TONE_MILLIS   90
+#define FIRST_PAUSE_MILLIS  20 + FIRST_TONE_MILLIS
+#define SECOND_TONE_PITCH   1000
+#define SECOND_TONE_MILLIS  100 + FIRST_PAUSE_MILLIS
+#define SECOND_PAUSE_MILLIS 20 + SECOND_TONE_MILLIS
+#define THIRD_TONE_PITCH    2000
+#define THRID_TONE_MILLIS   150 + SECOND_PAUSE_MILLIS
+
+bool buzzing = false;
+
+void playJingle() {
+  unsigned long elapsed = buzzerTimer.elapsed();
+  if (!buzzing && elapsed < FIRST_TONE_MILLIS) {
+    tone(BUZZER_PIN, FIRST_TONE_PITCH);
+    buzzing = true;
+  } else if (buzzing && elapsed >= FIRST_TONE_MILLIS) {
+    noTone(BUZZER_PIN);
+    buzzing = false;
+  } else if (!buzzing && elapsed >= FIRST_PAUSE_MILLIS) {
+    tone(BUZZER_PIN, SECOND_TONE_PITCH);
+    buzzing = true;
+  } else if (buzzing && elapsed >= SECOND_TONE_MILLIS) {
+    noTone(BUZZER_PIN);
+    buzzing = false;
+  } else if (!buzzing && elapsed >= SECOND_PAUSE_MILLIS) {
+    tone(BUZZER_PIN, THIRD_TONE_PITCH);
+    buzzing = true;
+  } else if (buzzing && elapsed >= THRID_TONE_MILLIS) {
+    noTone(BUZZER_PIN);
+    buzzing = false;
+  }
+}
+
+void resetJingle() {
+  noTone(BUZZER_PIN);
+  buzzing = false;
+  buzzerTimer.restart();
+}
 
 
 ///////////////////////////////////////
