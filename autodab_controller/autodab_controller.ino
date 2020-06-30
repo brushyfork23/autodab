@@ -463,6 +463,7 @@ void tickGood() {
 // Buzzer Jingle utility methods
 ///////////////////////////////////////
 
+// Jingle tones and timings
 #define FIRST_TONE_PITCH    1250
 #define FIRST_TONE_MILLIS   90
 #define FIRST_PAUSE_MILLIS  20 + FIRST_TONE_MILLIS
